@@ -10,7 +10,6 @@ int EcalSeverityLevelAlgo::severityLevel( const DetId id,
                 float spIdThreshold
                 )
 {
-
         // get DB flag
         uint16_t dbStatus = retrieveDBStatus( id, chStatus );
         // get recHit flags
@@ -30,13 +29,11 @@ int EcalSeverityLevelAlgo::severityLevel( const DetId id,
         } else {
                 // the channel is in the recHit collection
                 // .. is it a spike?
-                if ( id.subdetId() == EcalBarrel && (spikeFromNeighbours(id, recHits, recHitEtThreshold, spId) > spIdThreshold)  ) return kWeird;
-                // for now no filtering on VPT discharges in the endcap
-
+                if ( spikeFromNeighbours(id, recHits, recHitEtThreshold, spId) > spIdThreshold  ) return kWeird;
                 // .. not a spike, return the normal severity level
                 return severityLevel( *it, chStatus );
         }
-        return kGood;
+        return 0;
 }
 
 int EcalSeverityLevelAlgo::severityLevel( const EcalRecHit &recHit, 
@@ -99,22 +96,19 @@ float EcalSeverityLevelAlgo::spikeFromNeighbours( const DetId id,
                                                   SpikeId spId
                                                   )
 {
-  switch( spId ) {
-  case kE1OverE9:
-    return E1OverE9( id, recHits, recHitEtThreshold );
-    break;
-  case kSwissCross:
-    return swissCross( id, recHits, recHitEtThreshold , true);
-    break;
-  case kSwissCrossBordersIncluded:
-    return swissCross( id, recHits, recHitEtThreshold , false);
-    break;
-  default:
-    edm::LogInfo("EcalSeverityLevelAlgo") << "Algorithm number " << spId
-					  << " not known. Please check the enum in EcalSeverityLevelAlgo.h";
-    break;
-    
-  }
+        switch( spId ) {
+                case kE1OverE9:
+                        return E1OverE9( id, recHits, recHitEtThreshold );
+                        break;
+                case kSwissCross:
+                        return swissCross( id, recHits, recHitEtThreshold );
+                        break;
+                default:
+                        edm::LogInfo("EcalSeverityLevelAlgo") << "Algorithm number " << spId
+                                << " not known. Please check the enum in EcalSeverityLevelAlgo.h";
+                        break;
+
+        }
         return 0;
 }
 
@@ -132,23 +126,11 @@ float EcalSeverityLevelAlgo::E1OverE9( const DetId id, const EcalRecHitCollectio
                         }
                 }
                 return recHitE(id, recHits) / s9;
-        } else if( id.subdetId() == EcalEndcap ) {
-                // select recHits with Et above recHitEtThreshold
-                if ( recHitApproxEt( id, recHits ) < recHitEtThreshold ) return 0;
-                EEDetId eeId( id );
-                float s9 = 0;
-                for ( int dx = -1; dx <= +1; ++dx ) {
-                        for ( int dy = -1; dy <= +1; ++dy ) {
-                                s9 += recHitE( id, recHits, dx, dy );
-                        }
-                }
-                return recHitE(id, recHits) / s9;
-
         }
         return 0;
 }
 
-float EcalSeverityLevelAlgo::swissCross( const DetId id, const EcalRecHitCollection & recHits, float recHitEtThreshold , bool avoidIeta85)
+float EcalSeverityLevelAlgo::swissCross( const DetId id, const EcalRecHitCollection & recHits, float recHitEtThreshold )
 {
         // compute swissCross
         if ( id.subdetId() == EcalBarrel ) {
@@ -157,18 +139,7 @@ float EcalSeverityLevelAlgo::swissCross( const DetId id, const EcalRecHitCollect
                 // (may improve considering also eta module borders, but no
                 // evidence for the time being that there the performance is
                 // different)
-                if ( abs(ebId.ieta())==85 && avoidIeta85) return 0;
-                // select recHits with Et above recHitEtThreshold
-                if ( recHitApproxEt( id, recHits ) < recHitEtThreshold ) return 0;
-                float s4 = 0;
-                float e1 = recHitE( id, recHits );
-                s4 += recHitE( id, recHits,  1,  0 );
-                s4 += recHitE( id, recHits, -1,  0 );
-                s4 += recHitE( id, recHits,  0,  1 );
-                s4 += recHitE( id, recHits,  0, -1 );
-                return 1 - s4 / e1;
-        } else if ( id.subdetId() == EcalEndcap ) {
-                EEDetId eeId( id );
+                if ( abs(ebId.ieta())==85 ) return 0;
                 // select recHits with Et above recHitEtThreshold
                 if ( recHitApproxEt( id, recHits ) < recHitEtThreshold ) return 0;
                 float s4 = 0;
@@ -183,15 +154,9 @@ float EcalSeverityLevelAlgo::swissCross( const DetId id, const EcalRecHitCollect
 }
 
 float EcalSeverityLevelAlgo::recHitE( const DetId id, const EcalRecHitCollection & recHits,
-                                           int di, int dj )
+                                           int dEta, int dPhi )
 {
-        // in the barrel:   di = dEta   dj = dPhi
-        // in the endcap:   di = dX     dj = dY
-  
-        DetId nid;
-        if( id.subdetId() == EcalBarrel) nid = EBDetId::offsetBy( id, di, dj );
-        else if( id.subdetId() == EcalEndcap) nid = EEDetId::offsetBy( id, di, dj );
-
+        DetId nid = EBDetId::offsetBy( id, dEta, dPhi );
         return ( nid == DetId(0) ? 0 : recHitE( nid, recHits ) );
 }
 
