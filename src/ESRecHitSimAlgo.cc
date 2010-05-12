@@ -17,14 +17,14 @@ ESRecHitSimAlgo::ESRecHitSimAlgo(int gain, int pedestal, double MIPADC, double M
     pw[2] =  0.247238;
   }
   else if (gain_ == 1) {
-    pw[0] = -0.0772417;
-    pw[1] =  0.8168024;
-    pw[2] =  0.3857636;
+    pw[0] = 0.0;
+    pw[1] = 0.725;
+    pw[2] = 0.4525;
   }
   else if (gain_ == 2) {
-    pw[0] = -0.01687177;
-    pw[1] =  0.77676196;
-    pw[2] =  0.416363;
+    pw[0] = 0.0;
+    pw[1] = 0.725;
+    pw[2] = 0.4525;
   }
 
   LogDebug("ESRecHitSimAlgo") << "ESRecHitSimAlgo : Gain "<<gain_<<" Weights : "<<pw[0]<<" "<<pw[1]<<" "<<pw[2];
