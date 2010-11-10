@@ -5,9 +5,9 @@
  *  Template used to compute amplitude, pedestal, time jitter, chi2 of a pulse
  *  using a ratio method
  *
- *  $Id: EcalUncalibRecHitRatioMethodAlgo.h,v 1.7 2010/06/09 07:51:55 franzoni Exp $
- *  $Date: 2010/06/09 07:51:55 $
- *  $Revision: 1.7 $
+ *  $Id: EcalUncalibRecHitRatioMethodAlgo.h,v 1.8 2010/06/10 10:13:05 franzoni Exp $
+ *  $Date: 2010/06/10 10:13:05 $
+ *  $Revision: 1.8 $
  *  \author A. Ledovskoy (Design) - M. Balazs (Implementation)
  */
 
@@ -55,6 +55,7 @@ template < class C > class EcalUncalibRecHitRatioMethodAlgo {
         void computeTime(std::vector < double >&timeFitParameters, std::pair < double, double >&timeFitLimits, std::vector< double > &amplitudeFitParameters);
         void computeAmplitude( std::vector< double > &amplitudeFitParameters );
         CalculatedRecHit getCalculatedRecHit() { return calculatedRechit_; };
+	bool fixMGPAslew( const C &dataFrame );
 
       protected:
 	std::vector < double > amplitudes_;
@@ -151,6 +152,36 @@ void EcalUncalibRecHitRatioMethodAlgo<C>::init( const C &dataFrame, const double
         }
 }
 
+template <class C>
+bool EcalUncalibRecHitRatioMethodAlgo<C>::fixMGPAslew( const C &dataFrame )
+{
+
+  // This fuction finds sample(s) preceeding gain switching and
+  // inflates errors on this sample, therefore, making this sample
+  // invisible for Ratio Method. Only gain switching DOWN is
+  // considered Only gainID=1,2,3 are considered. In case of the
+  // saturation (gainID=0), we keep "distorted" sample because it is
+  // the only chance to make time measurement; the qualilty of it will
+  // be bad anyway.
+
+  bool result = false;
+
+  int GainIdPrev;
+  int GainIdNext;
+  for (int iSample = 1; iSample < C::MAXSAMPLES; iSample++) {
+    GainIdPrev = dataFrame.sample(iSample-1).gainId();
+    GainIdNext = dataFrame.sample(iSample).gainId();
+    if( GainIdPrev>=1 && GainIdPrev<=3 && 
+        GainIdNext>=1 && GainIdNext<=3 && 
+        GainIdPrev<GainIdNext ){
+      amplitudes_[iSample-1]=1e-9;
+      amplitudeErrors_[iSample-1]=1e+9;
+      result = true;      
+    }
+  }
+  return result;
+
+}
 
 template<class C>
 void EcalUncalibRecHitRatioMethodAlgo<C>::computeTime(std::vector < double >&timeFitParameters,
