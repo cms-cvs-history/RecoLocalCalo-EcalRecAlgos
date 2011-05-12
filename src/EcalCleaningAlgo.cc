@@ -1,6 +1,6 @@
 /* Implementation of class EcalCleaningAlgo
    \author Stefano Argiro
-   \version $Id: EcalCleaningAlgo.cc,v 1.3 2011/01/31 15:03:56 argiro Exp $
+   \version $Id: EcalCleaningAlgo.cc,v 1.7 2011/03/08 13:12:01 argiro Exp $
    \date 20 Dec 2010
 */    
 
@@ -90,16 +90,19 @@ EcalCleaningAlgo::checkTopology(const DetId& id,
 
   // for energies below threshold, we don't apply e4e1 cut
   float energy = recHitE(id,rhs);
+ 
+  if (energy< ethresh) return EcalRecHit::kGood;
   if (isNearCrack(id) && energy < ethresh*tightenCrack_e1_single_) 
     return EcalRecHit::kGood;
-  if (energy< ethresh) return EcalRecHit::kGood;
-    
+
+
   float e4e1value = e4e1(id,rhs);
   e4e1thresh = a* log10(energy) + b;
 
   // near cracks the cut is tighter by a factor 
-  if (id.subdetId() == EcalBarrel && isNearCrack(id)) 
+  if (isNearCrack(id)) {
     e4e1thresh/=tightenCrack_e4e1_single_;
+  }
 
   // identify spike
   if (e4e1value < e4e1thresh) return EcalRecHit::kWeird; 
@@ -107,6 +110,9 @@ EcalCleaningAlgo::checkTopology(const DetId& id,
 
 
   // now for double spikes
+ 
+  // no checking for double spikes in EE
+  if( id.subdetId() == EcalEndcap) return EcalRecHit::kGood;
 
   float e6e2value = e6e2(id,rhs);
   float e6e2thresh = e6e2thresh_ ;
@@ -242,12 +248,24 @@ const std::vector<DetId> EcalCleaningAlgo::neighbours(const DetId& id){
 
 bool EcalCleaningAlgo::isNearCrack(const DetId& id){
 
-  if (id.subdetId() == EcalEndcap) return false;
-  
-  return EBDetId::isNextToBoundary(EBDetId(id));
-  
+  if (id.subdetId() == EcalEndcap) { 
+    return EEDetId::isNextToRingBoundary(id);
+  } else {
+    return EBDetId::isNextToBoundary(id);
+  }
 }
 
 
 
+void EcalCleaningAlgo::setFlags(EcalRecHitCollection& rhs){
+  EcalRecHitCollection::iterator rh;
+  //changing the collection on place
+  for (rh=rhs.begin(); rh!=rhs.end(); ++rh){
+    EcalRecHit::Flags state=checkTopology(rh->id(),rhs);
+    if (state!=EcalRecHit::kGood) { 
+      rh->unsetFlag(EcalRecHit::kGood);
+      rh->setFlag(state);
+    }
+  }
+}
 
