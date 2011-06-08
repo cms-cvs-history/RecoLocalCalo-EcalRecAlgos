@@ -62,32 +62,32 @@ void testEcalSeverityLevelAlgo::testSeverity(){
   EcalRecHit rh1(id,0,0);
   rh1.setFlag(EcalRecHit::kGood);
    
-  CPPUNIT_ASSERT(algo_->severityLevel(rh1) == EcalSeverityLevel::kGood);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh1) == EcalSeverityLevelAlgo::kGood);
   
   EcalRecHit rh2(id,0,0);
   rh2.setFlag(EcalRecHit::kPoorReco);
   rh2.setFlag(EcalRecHit::kPoorCalib);
-  CPPUNIT_ASSERT(algo_->severityLevel(rh2) == EcalSeverityLevel::kProblematic);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh2) == EcalSeverityLevelAlgo::kProblematic);
 
   EcalRecHit rh3(id,0,0);
   rh3.setFlag(EcalRecHit::kLeadingEdgeRecovered);
   rh3.setFlag(EcalRecHit::kTowerRecovered);
   std::cout << algo_->severityLevel(rh3) << std::endl;
 
-  CPPUNIT_ASSERT(algo_->severityLevel(rh3) == EcalSeverityLevel::kRecovered);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh3) == EcalSeverityLevelAlgo::kRecovered);
 
 
   EcalRecHit rh4(id,5.0,0);
   rh4.setFlag(EcalRecHit::kOutOfTime);
   rh4.setFlag(EcalRecHit::kTowerRecovered);
   
-  CPPUNIT_ASSERT(algo_->severityLevel(rh4) == EcalSeverityLevel::kTime);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh4) == EcalSeverityLevelAlgo::kTime);
 
   EcalRecHit rh5(id,0,0);
   rh5.setFlag(EcalRecHit::kWeird);
   rh5.setFlag(EcalRecHit::kDiWeird);
   
-  CPPUNIT_ASSERT(algo_->severityLevel(rh5) == EcalSeverityLevel::kWeird);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh5) == EcalSeverityLevelAlgo::kWeird);
   
   EcalRecHit rh6(id,0,0);
   rh6.setFlag(EcalRecHit::kFaultyHardware);
@@ -96,17 +96,17 @@ void testEcalSeverityLevelAlgo::testSeverity(){
   rh6.setFlag(EcalRecHit::kDead);
   rh6.setFlag(EcalRecHit::kKilled);
 
-  CPPUNIT_ASSERT(algo_->severityLevel(rh6) == EcalSeverityLevel::kBad);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh6) == EcalSeverityLevelAlgo::kBad);
 
 
   EcalRecHit rh7(id,1.5,0);
   rh7.setFlag(EcalRecHit::kOutOfTime);
   
-  CPPUNIT_ASSERT(algo_->severityLevel(rh7) == EcalSeverityLevel::kGood);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh7) == EcalSeverityLevelAlgo::kGood);
 
   EcalRecHit rh8(id,2.5,0);
   rh8.setFlag(EcalRecHit::kOutOfTime);
   
-  CPPUNIT_ASSERT(algo_->severityLevel(rh8) == EcalSeverityLevel::kTime);
+  CPPUNIT_ASSERT(algo_->severityLevel(rh8) == EcalSeverityLevelAlgo::kTime);
 
 }
